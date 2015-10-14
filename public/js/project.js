@@ -44,6 +44,7 @@ $(function () {
                     function(i) { $($in[i]).attr('disabled', true); }
                 );
                 $('#id_name').parents('.form-group').removeClass('has-error');
+                $(this).removeClass('btn-primary').addClass('btn-success');
                 $(this).text("You're in the queue.");
                 $(this).blur();
             } else {
