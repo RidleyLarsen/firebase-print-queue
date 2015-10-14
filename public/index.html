@@ -1,0 +1,110 @@
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+        <script src="js/settings.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+    </head>
+    <body>
+        <script>
+            var ref = new Firebase(FIREBASE_URL);
+            var queue = ref.child('queue');
+            queue.on('child_added', function (snapshot) {
+                var data = snapshot.val();
+                text = '<strong>' + data.name + '</strong>'
+                if (data.project) {
+                    text += ': ' + data.project;
+                }
+                if (data.link) {
+                    text += ' on <a href="' + data.link + '">Thingiverse</a>';
+                }
+                if (!data.done) {
+                    $('#queue').append(
+                        $(
+                            '<div class="col-xs-8 col-xs-push-2 well">' +
+                            '<p class="pull-left" id="' + snapshot.key() + '">' + text + '</p>' +
+                            '<button class="btn btn-primary pull-right done">Done</button></div>'
+                        )
+                    );
+                    $('#empty').hide();
+                }
+            })
+            queue.on('child_removed', function (snapshot) {
+                var data = snapshot.val();
+                $('#' + snapshot.key());
+            })
+            $(function () {
+                $(document).on('click', '.done', function(e) {
+                    e.preventDefault();
+                    queue.child($(this).siblings('p').attr('id')).update({
+                        done: true,
+                    })
+                    $(this).parents('.well').remove();
+                    if ($('.well').length === 0) {
+                        $('#empty').show();
+                    }
+                })
+                $('#submit').on('click', function(e) {
+                    e.preventDefault();
+                    if (!$(this).hasClass('disabled')) {
+                        if ($('#id_name').val()) {
+                            data = {
+                                name: $('#id_name').val(),
+                                project: $('#id_project').val(),
+                                link: $('#id_link').val(),
+                                done: false,
+                            }
+                            queue.push(data);
+                            $(this).addClass('disabled');
+                            $in = $('input');
+                            $in.each(
+                                function(i) { $($in[i]).attr('disabled', true); }
+                            );
+                            $('#id_name').parents('.form-group').removeClass('has-error');
+                            $(this).text("You're in the queue.");
+                            $(this).blur();
+                        } else {
+                            $('#id_name').parents('.form-group').addClass('has-error');
+                            $('#id_name').focus();
+                        }
+                    }
+                })
+            })
+
+        </script>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-9 col-xs-push-3">
+                    <h1>3D Print Queue</h1>
+                </div>
+            </div>
+            <form class="form-horizontal">
+                <div class="form-group">
+                    <label for="id_name" class="col-xs-3 control-label">Name:</label>
+                    <div class="col-xs-9"><input class=" form-control" type="text" placeholder="e.g. Astronaut Mike Dexter" id="id_name"></div>
+                </div>
+                <div class="form-group">
+                    <label for="id_project" class="col-xs-3 control-label">Project (Optional):</label>
+                    <div class="col-xs-9"><input class="form-control" type="text" placeholder="e.g. mario boo" id="id_project"></div>
+                </div>
+                <div class="form-group">
+                    <label for="id_link" class="col-xs-3 control-label">Thingiverse Link (optional):</label>
+                    <div class="col-xs-9"><input class="form-control" type="text" placeholder="e.g. http://www.thingiverse.com/thing:524988" id="id_link"></div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-9 col-xs-push-3">
+                        <button id="submit" type="button" class="btn btn-primary">Get in the Queue!</button>
+                    </div>
+                </div>
+            </form>
+            <div class="row" id="queue">
+                <h1 class="col-xs-8 col-xs-push-2">
+                    Current Queue:
+                </h1>
+                <p id="empty" class="col-xs-8 col-xs-push-2">
+                    Looks like the queue is empty. Go ahead and join!
+                </p>
+            </div>
+        </div>
+    </body>
+</html>
